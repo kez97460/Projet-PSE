@@ -6,18 +6,22 @@ SRCDIR=./src
 SOURCES=$(wildcard $(SRCDIR)/*.c)
 OBJECTS=$(SOURCES:.c=.o)
 
-EXECUTABLE=appli_projet
+all: server client
 
-all: $(EXECUTABLE)
+server: $(OBJECTS) server.o
+	$(CC) $(LDFLAGS) $(OBJECTS) server.o -o $@ -lm
 
-$(EXECUTABLE): $(OBJECTS) main.o
-	$(CC) $(LDFLAGS) $(OBJECTS) main.o -o $@ -lm
+client: $(OBJECTS) client.o
+	$(CC) $(LDFLAGS) $(OBJECTS) client.o -o $@ -lm
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@ -lm 
 
-main.o: main.c
+server.o: server.c
+	$(CC) $(CFLAGS) -c $< -o $@ -lm
+
+client.o: client.c
 	$(CC) $(CFLAGS) -c $< -o $@ -lm
 
 clean:
-	rm -f $(EXECUTABLE) $(OBJECTS)
+	rm -f server.o client.o $(OBJECTS)
