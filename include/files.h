@@ -1,5 +1,5 @@
-#ifndef FLOAT_LISTS_H
-#define FLOAT_LISTS_H
+#ifndef LISTS_H
+#define LISTS_H
 
 /*--------------------------------------------------------------------------------------------*/
 
@@ -20,8 +20,6 @@ typedef struct _product_list
 /*--------------------------------------------------------------------------------------------*/
 
 void readTxt(Product_list *head, char* txt_name);
-void printList(Product_list *head);
-void addNode(Product_list *head);
-
+void printData(Product_list *head);
 
 #endif

@@ -1,27 +1,23 @@
 CC=gcc
-CFLAGS= -I./include -g
+CFLAGS= -I./include
 LDFLAGS=
 
 SRCDIR=./src
 SOURCES=$(wildcard $(SRCDIR)/*.c)
 OBJECTS=$(SOURCES:.c=.o)
 
-all: server client
+EXECUTABLE=test
 
-server: $(OBJECTS) server.o
-    $(CC) $(LDFLAGS) $(OBJECTS) server.o -o $@ -lm
+all: $(EXECUTABLE)
 
-client: $(OBJECTS) client.o
-    $(CC) $(LDFLAGS) $(OBJECTS) client.o -o $@ -lm
+$(EXECUTABLE): $(OBJECTS) main.o
+	$(CC) $(LDFLAGS) $(OBJECTS) main.o -o $@ -lm
 
 $(SRCDIR)/%.o: $(SRCDIR)/%.c
-    $(CC) $(CFLAGS) -c $< -o $@ -lm 
+	$(CC) $(CFLAGS) -c $< -o $@ -lm 
 
-server.o: server.c
-    $(CC) $(CFLAGS) -c $< -o $@ -lm
-
-client.o: client.c
-    $(CC) $(CFLAGS) -c $< -o $@ -lm
+main.o: main.c
+	$(CC) $(CFLAGS) -c $< -o $@ -lm
 
 clean:
-    rm -f server.o client.o $(OBJECTS)
+	rm -f $(EXECUTABLE) $(OBJECTS)
