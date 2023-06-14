@@ -1,12 +1,12 @@
 CC=gcc
-CFLAGS= -I./include
+CFLAGS= -I./include -g
 LDFLAGS=
 
 SRCDIR=./src
 SOURCES=$(wildcard $(SRCDIR)/*.c)
 OBJECTS=$(SOURCES:.c=.o)
 
-EXECUTABLE=test
+EXECUTABLE=appli_projet
 
 all: $(EXECUTABLE)
 
