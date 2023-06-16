@@ -1,1 +1,5 @@
 *.o
+main
+client
+server
+*.log
