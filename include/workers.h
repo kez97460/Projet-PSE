@@ -13,7 +13,8 @@ typedef struct _Worker
 {
     pthread_t id;               
     int channel;                
-    sem_t sem;                  
+    sem_t sem;
+    pthread_mutex_t mutex;
 } Worker;
 
 Worker *initWorkerArray(void *threadWorker(void *), int size);

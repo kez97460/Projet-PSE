@@ -1,7 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <string.h>
+#include <unistd.h>
+#include <pthread.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -11,6 +14,7 @@
 #include "settings.h"
 #include "resolv.h"
 #include "errors.h"
+#include "ligne.h"
 
 int main(int argc, char const *argv[])
 {
@@ -18,6 +22,7 @@ int main(int argc, char const *argv[])
     struct sockaddr_in *server_address;
     int ended = 0;
     char line[LINE_SIZE];
+    char buffer[LINE_SIZE];
     int line_length;
 
     // Output an error message if we write while the server is down
@@ -36,7 +41,7 @@ int main(int argc, char const *argv[])
     if (server_address == NULL)
         error("adresse %s port %s inconnus\n", argv[1], argv[2]);
 
-    printf("Client : address %s, port %s \n", stringIP(ntohl(server_address->sin_addr.s_addr)), ntohs(server_address->sin_port));
+    printf("Client : address %s, port %d \n", stringIP(ntohl(server_address->sin_addr.s_addr)), ntohs(server_address->sin_port));
 
     printf("Client : connecting socket \n");
     status = connect(descriptor_socket, (struct sockaddr *)server_address, sizeof(struct sockaddr_in));
@@ -51,7 +56,25 @@ int main(int argc, char const *argv[])
             ended = 1;
         else
         {
-            line_length = 
+            line_length = send(descriptor_socket, line, sizeof(buffer), 0);
+            if(line_length < 0)
+                error_IO("Socket write");
+            
+            else if(!strcmp(line, "quit\n") || !strcmp(line, "exit\n"))
+            {
+                printf("Quitting...\n");
+                ended = 1;
+            }
+            else
+            {
+                recv(descriptor_socket, buffer, sizeof(buffer), 0);
+                printf("<Server> %s\n", buffer);
+            }
         }
     }
+
+    if (close(descriptor_socket) == -1)
+        error_IO("fermeture socket");
+
+    return 0;
 }

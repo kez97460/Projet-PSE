@@ -16,6 +16,7 @@
 #include "workers.h"
 #include "settings.h"
 #include "resolv.h"
+#include "ligne.h"
 
 void *threadWorker(void *arg);
 char *stringIP(uint32_t entierIP);
@@ -29,7 +30,7 @@ int main(int argc, char const *argv[])
     /* Variables */
     int descriptor_socket, channel, status, address_length, index_free_worker;
     struct sockaddr_in bind_address, client_address;
-    Worker *worker_array;
+    Worker *worker_array = initWorkerArray(threadWorker, NB_WORKERS);
 
     /* Main args */
     if (argc != 2)
@@ -43,9 +44,6 @@ int main(int argc, char const *argv[])
     descriptor_logs = open(LOG_NAME, O_CREAT | O_WRONLY | O_APPEND, 0600);
     if (descriptor_logs == -1)
         error_IO("Logging");
-
-    /* Worker cration */
-    worker_array = initWorkerArray(threadWorker, NB_WORKERS);
 
     status = sem_init(&sem_free_workers, 0, NB_WORKERS); // sem_free_workers is a global variable
     if (status != 0)
@@ -105,16 +103,57 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-void clientSession(int channel)
+void clientSession(Worker* worker_ptr)
 {
     int ended = 0;
     char line[LINE_SIZE];
+    char buffer[LINE_SIZE];
     int status;
+    int line_length;
+
+    int channel = worker_ptr->channel;
+    pthread_mutex_t mutex = worker_ptr->mutex;
+    
 
     while(!ended)
     {
-        // add things here
+        pthread_mutex_lock(&mutex);
+        line_length = recv(channel, line, sizeof(line), 0);
+        pthread_mutex_unlock(&mutex);
+
+
+        if(line_length < 0)
+            error_IO("Reading line");
+        
+        else if(line_length == 0)
+        {
+            printf("Server : client offline\n");
+            ended = 1;
+        }
+
+        else if(!strcmp(line, "quit\n") || !strcmp(line, "exit\n"))
+        {
+            // ecrireLigne(channel, "Quitting...");
+            printf("Server : client asked to leave \n");
+            ended = 1;
+        }
+
+        else
+        {
+            printf("<A client> %s", line);
+
+            strcpy(buffer, "Invalid command : ");
+            strcat(buffer, line);
+            strcat(buffer, "Type \"help\" for a list of commands");
+
+            pthread_mutex_lock(&mutex);
+            send(channel, buffer, sizeof(buffer), 0);
+            pthread_mutex_unlock(&mutex);
+        }
     }
+
+    if (close(channel) == -1)
+        error_IO("Closing channel"); 
 
 }
 
@@ -129,7 +168,7 @@ void *threadWorker(void *arg)
             error_IO("Semaphore wait");
 
         printf("A client joined \n");
-        clientSession(worker_ptr->channel);
+        clientSession(worker_ptr);
         printf("A client left \n");
         worker_ptr->channel = -1;
 

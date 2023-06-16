@@ -39,7 +39,7 @@ int lireLigne(int fd, char *buffer) {
 int ecrireLigne(int fd, char *buffer) {
   char *position;
   int taille, ecr, nbecr;
-
+  
   position = strchr(buffer, '\n');
   if (position == NULL) {
     taille = strlen(buffer);
