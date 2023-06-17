@@ -21,6 +21,8 @@ Worker *initWorkerArray(void *threadWorker(void *) ,int size)
         status = pthread_mutex_init(&worker_array[i].mutex, NULL);
         if (status != 0)
             error_IO("Mutex init");
+
+        strcpy(worker_array[i].name, "Anonymous");
     }
 
     return worker_array; // i totally did not forget that and search where the bug was for 30 minutes
