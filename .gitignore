@@ -3,4 +3,5 @@ main
 client
 server
 *.log
+test
 

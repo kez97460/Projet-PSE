@@ -15,15 +15,25 @@
 #include "resolv.h"
 #include "errors.h"
 #include "ligne.h"
+#include "string_utils.h"
+
+void *recvThread(void *arg);
+
+int ended; // end everything once this is 1
 
 int main(int argc, char const *argv[])
 {
     int descriptor_socket, status;
     struct sockaddr_in *server_address;
-    int ended = 0;
+    ended = 0;
     char line[LINE_SIZE];
     char buffer[LINE_SIZE];
     int line_length;
+
+    pthread_t thread_recv;
+
+    pthread_mutex_t mutex;
+    pthread_mutex_init(&mutex, NULL);
 
     // Output an error message if we write while the server is down
     signal(SIGPIPE, SIG_IGN);
@@ -48,7 +58,10 @@ int main(int argc, char const *argv[])
     if(status < 0)
         error_IO("Connection");
 
-    /* Infinite loop */
+    // create a thread to receive data
+    pthread_create(&thread_recv, NULL, recvThread, &descriptor_socket);
+
+    /* Infinite loop to send data */
     while (!ended)
     {
         printf(">");
@@ -56,7 +69,10 @@ int main(int argc, char const *argv[])
             ended = 1;
         else
         {
+            pthread_mutex_lock(&mutex);
             line_length = send(descriptor_socket, line, sizeof(buffer), 0);
+            pthread_mutex_unlock(&mutex);
+
             if(line_length < 0)
                 error_IO("Socket write");
             
@@ -65,11 +81,6 @@ int main(int argc, char const *argv[])
                 printf("Quitting...\n");
                 ended = 1;
             }
-            else
-            {
-                recv(descriptor_socket, buffer, sizeof(buffer), 0);
-                printf("<Server> %s\n", buffer);
-            }
         }
     }
 
@@ -77,4 +88,21 @@ int main(int argc, char const *argv[])
         error_IO("fermeture socket");
 
     return 0;
+}
+
+// Thread that receives messages from the server and prints them
+void *recvThread(void *arg)
+{
+    char buffer[LINE_SIZE];
+    int line_length;
+
+    int *socket_ptr = (int *) arg;
+
+    while(!ended)
+    {
+        line_length = recv(*socket_ptr, buffer, sizeof(buffer), 0);
+        cleanString(buffer);
+        printf("\r%s \n>", buffer);
+        fflush(stdout); // needed to print the '>', idk why
+    }
 }
